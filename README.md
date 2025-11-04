@@ -4,7 +4,7 @@ A visually striking, luxury liquor store management system combining vintage aes
 
 CellarCraft is a bespoke, luxury management system designed for Hellena's Bistro, a premium boutique liquor store. It merges a vintage European wine cellar aesthetic with a hyper-modern, minimalist UI, creating an experience akin to 'Gatsby's cellar meets Tesla's interface.' The system is a comprehensive suite covering all aspects of store management, from live sales dashboards and visual inventory control to a sophisticated point-of-sale, customer loyalty programs, and in-depth analytics. Every interaction is designed to be intuitive, visually striking, and efficient, empowering staff and management to deliver an exceptional customer experience while optimizing business operations.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/kimani-1/cellarcraft-hellena-s-bistro-management-suite)
 
 ## ✨ Key Features
 
@@ -98,4 +98,4 @@ This application is designed to be deployed to the Cloudflare global network.
 
 Alternatively, you can deploy directly from your GitHub repository using the button below.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/kimani-1/cellarcraft-hellena-s-bistro-management-suite)

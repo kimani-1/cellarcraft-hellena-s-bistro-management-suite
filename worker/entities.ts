@@ -1,41 +1,118 @@
-/**
- * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
- */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
-// USER ENTITY: one DO instance per user
-export class UserEntity extends IndexedEntity<User> {
-  static readonly entityName = "user";
-  static readonly indexName = "users";
-  static readonly initialState: User = { id: "", name: "" };
-  static seedData = MOCK_USERS;
+import type { Product, Customer, Sale, Supplier, PurchaseOrder, OnlineOrder, Event, StaffMember } from "@shared/types";
+import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_SALES, MOCK_SUPPLIERS, MOCK_PURCHASE_ORDERS, MOCK_ONLINE_ORDERS, MOCK_EVENTS, MOCK_STAFF_MEMBERS } from "@shared/mock-data";
+// PRODUCT ENTITY
+export class ProductEntity extends IndexedEntity<Product> {
+  static readonly entityName = "product";
+  static readonly indexName = "products";
+  static readonly initialState: Product = {
+    id: "",
+    name: "",
+    type: 'Wine',
+    origin: "",
+    price: 0,
+    cost: 0,
+    stockLevel: 0,
+    lowStockThreshold: 0,
+    imageUrl: ""
+  };
+  static seedData = MOCK_PRODUCTS;
 }
-
-// CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
-export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
-const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
-  ...c,
-  messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
-}));
-
-export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
-  static readonly entityName = "chat";
-  static readonly indexName = "chats";
-  static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
-  static seedData = SEED_CHAT_BOARDS;
-
-  async listMessages(): Promise<ChatMessage[]> {
-    const { messages } = await this.getState();
-    return messages;
-  }
-
-  async sendMessage(userId: string, text: string): Promise<ChatMessage> {
-    const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
-    await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
-    return msg;
-  }
+// CUSTOMER ENTITY
+export class CustomerEntity extends IndexedEntity<Customer> {
+  static readonly entityName = "customer";
+  static readonly indexName = "customers";
+  static readonly initialState: Customer = {
+    id: "",
+    name: "",
+    phone: "",
+    loyaltyTier: 'Bronze',
+    purchaseHistory: []
+  };
+  static seedData = MOCK_CUSTOMERS;
 }
-
+// SALE ENTITY
+export class SaleEntity extends IndexedEntity<Sale> {
+  static readonly entityName = "sale";
+  static readonly indexName = "sales";
+  static readonly initialState: Sale = {
+    id: "",
+    items: [],
+    total: 0,
+    paymentMethod: 'Cash',
+    timestamp: 0
+  };
+  static seedData = MOCK_SALES;
+}
+// SUPPLIER ENTITY
+export class SupplierEntity extends IndexedEntity<Supplier> {
+  static readonly entityName = "supplier";
+  static readonly indexName = "suppliers";
+  static readonly initialState: Supplier = {
+    id: "",
+    name: "",
+    contactPerson: "",
+    phone: "",
+    email: "",
+    category: 'Wine',
+  };
+  static seedData = MOCK_SUPPLIERS;
+}
+// PURCHASE ORDER ENTITY
+export class PurchaseOrderEntity extends IndexedEntity<PurchaseOrder> {
+  static readonly entityName = "purchaseOrder";
+  static readonly indexName = "purchaseOrders";
+  static readonly initialState: PurchaseOrder = {
+    id: "",
+    supplierId: "",
+    supplierName: "",
+    orderDate: 0,
+    expectedDeliveryDate: 0,
+    status: 'Pending',
+    totalValue: 0,
+    itemCount: 0,
+  };
+  static seedData = MOCK_PURCHASE_ORDERS;
+}
+// ONLINE ORDER ENTITY
+export class OnlineOrderEntity extends IndexedEntity<OnlineOrder> {
+  static readonly entityName = "onlineOrder";
+  static readonly indexName = "onlineOrders";
+  static readonly initialState: OnlineOrder = {
+    id: "",
+    customerName: "",
+    orderDate: 0,
+    total: 0,
+    status: 'Pending Fulfillment',
+    itemCount: 0,
+  };
+  static seedData = MOCK_ONLINE_ORDERS;
+}
+// EVENT ENTITY
+export class EventEntity extends IndexedEntity<Event> {
+  static readonly entityName = "event";
+  static readonly indexName = "events";
+  static readonly initialState: Event = {
+    id: "",
+    title: "",
+    date: 0,
+    type: 'Wine Tasting',
+    attendees: 0,
+    maxCapacity: 0,
+  };
+  static seedData = MOCK_EVENTS;
+}
+// STAFF MEMBER ENTITY
+export class StaffMemberEntity extends IndexedEntity<StaffMember> {
+  static readonly entityName = "staffMember";
+  static readonly indexName = "staffMembers";
+  static readonly initialState: StaffMember = {
+    id: "",
+    name: "",
+    role: 'Clerk',
+    email: "",
+    phone: "",
+    status: 'Active',
+  };
+  static seedData = MOCK_STAFF_MEMBERS;
+}

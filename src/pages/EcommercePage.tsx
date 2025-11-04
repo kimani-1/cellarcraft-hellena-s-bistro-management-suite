@@ -2,17 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { api } from '@/lib/api-client';
 import type { OnlineOrder } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ServerCrash, MoreHorizontal, Truck, CheckCircle, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
+import { ServerCrash } from 'lucide-react';
 const salesData = [
   { name: 'In-Store', sales: 8750 },
   { name: 'Online', sales: 2340 },
@@ -26,8 +22,6 @@ export function EcommercePage() {
   const [orders, setOrders] = useState<OnlineOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -43,35 +37,6 @@ export function EcommercePage() {
     };
     fetchOrders();
   }, []);
-  const handleStatusChange = async (order: OnlineOrder, status: OnlineOrder['status']) => {
-    try {
-      const updatedOrder = await api<OnlineOrder>(`/api/online-orders/${order.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      });
-      setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-      toast.success("Order Status Updated", { description: `Order ${order.id} marked as ${status}.` });
-    } catch (err) {
-      toast.error("Failed to update status", { description: err instanceof Error ? err.message : "An unknown error occurred." });
-    }
-  };
-  const handleDelete = (order: OnlineOrder) => {
-    setSelectedOrder(order);
-    setIsDeleteDialogOpen(true);
-  };
-  const confirmDelete = async () => {
-    if (!selectedOrder) return;
-    try {
-      await api(`/api/online-orders/${selectedOrder.id}`, { method: 'DELETE' });
-      setOrders(prev => prev.filter(o => o.id !== selectedOrder.id));
-      toast.success("Order Deleted", { description: `Order ${selectedOrder.id} has been removed.` });
-    } catch (err) {
-      toast.error("Failed to delete order", { description: err instanceof Error ? err.message : "An unknown error occurred." });
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedOrder(null);
-    }
-  };
   const renderTableBody = () => {
     if (isLoading) {
       return Array.from({ length: 4 }).map((_, i) => (
@@ -81,14 +46,13 @@ export function EcommercePage() {
           <TableCell><Skeleton className="h-5 w-24" /></TableCell>
           <TableCell><Skeleton className="h-6 w-28" /></TableCell>
           <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-          <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
         </TableRow>
       ));
     }
     if (error) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="h-24 text-center text-destructive">
+          <TableCell colSpan={5} className="h-24 text-center text-destructive">
             {error}
           </TableCell>
         </TableRow>
@@ -97,7 +61,7 @@ export function EcommercePage() {
     if (orders.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="h-24 text-center">
+          <TableCell colSpan={5} className="h-24 text-center">
             No recent online orders.
           </TableCell>
         </TableRow>
@@ -114,42 +78,11 @@ export function EcommercePage() {
           </Badge>
         </TableCell>
         <TableCell className="text-right">KSH {order.total.toFixed(2)}</TableCell>
-        <TableCell className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleStatusChange(order, 'Shipped')} disabled={order.status === 'Shipped' || order.status === 'Delivered'}>
-                <Truck className="mr-2 h-4 w-4" />
-                <span>Mark as Shipped</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(order, 'Delivered')} disabled={order.status === 'Delivered'}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                <span>Mark as Delivered</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleDelete(order)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete Order</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
       </TableRow>
     ));
   };
   return (
     <div className="space-y-8">
-      <DeleteConfirmationDialog
-        isOpen={isDeleteDialogOpen}
-        setIsOpen={setIsDeleteDialogOpen}
-        onConfirm={confirmDelete}
-        title="Delete Online Order?"
-        description={`Are you sure you want to delete order ${selectedOrder?.id}? This action cannot be undone.`}
-      />
       <header>
         <h1 className="text-4xl font-display font-bold text-foreground">E-commerce</h1>
         <p className="text-lg text-muted-foreground">Monitor and manage your online store operations.</p>
@@ -199,7 +132,6 @@ export function EcommercePage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

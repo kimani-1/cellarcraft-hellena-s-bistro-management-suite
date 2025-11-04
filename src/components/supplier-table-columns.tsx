@@ -1,6 +1,6 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,11 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { Supplier } from "@shared/types"
-interface GetSupplierColumnsProps {
-  onEdit: (supplier: Supplier) => void;
-  onDelete: (supplier: Supplier) => void;
-}
-export const getSupplierColumns = ({ onEdit, onDelete }: GetSupplierColumnsProps): ColumnDef<Supplier>[] => [
+export const columns: ColumnDef<Supplier>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -55,15 +51,12 @@ export const getSupplierColumns = ({ onEdit, onDelete }: GetSupplierColumnsProps
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit(supplier)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                <span>Edit</span>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(supplier.id)}>
+                Copy supplier ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(supplier)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
+              <DropdownMenuItem>View Details</DropdownMenuItem>
+              <DropdownMenuItem>Create Purchase Order</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

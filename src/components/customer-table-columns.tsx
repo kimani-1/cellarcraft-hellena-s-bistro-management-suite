@@ -1,6 +1,6 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,11 +19,7 @@ const loyaltyTierConfig = {
   'Silver': 'bg-slate-400/20 text-slate-300 border-slate-400/30',
   'Bronze': 'bg-orange-600/20 text-orange-400 border-orange-600/30',
 }
-interface GetCustomerColumnsProps {
-  onEdit: (customer: Customer) => void;
-  onDelete: (customer: Customer) => void;
-}
-export const getCustomerColumns = ({ onEdit, onDelete }: GetCustomerColumnsProps): ColumnDef<Customer>[] => [
+export const columns: ColumnDef<Customer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -80,15 +76,14 @@ export const getCustomerColumns = ({ onEdit, onDelete }: GetCustomerColumnsProps
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit(customer)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                <span>Edit</span>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(customer.id)}
+              >
+                Copy customer ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(customer)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
+              <DropdownMenuItem>View customer</DropdownMenuItem>
+              <DropdownMenuItem>View payment history</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

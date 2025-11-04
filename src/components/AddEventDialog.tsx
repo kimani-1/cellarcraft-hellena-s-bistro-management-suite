@@ -30,8 +30,8 @@ import { format } from "date-fns";
 const eventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   type: z.enum(["Wine Tasting", "Launch Party", "Private Event", "Class"]),
-  date: z.date(),
-  maxCapacity: z.coerce.number().int().min(1, "Capacity must be at least 1"),
+  date: z.date({ required_error: "A date is required." }),
+  maxCapacity: z.preprocess((val) => Number(String(val).trim() || 0), z.number().int().min(1, "Capacity must be at least 1")),
 });
 type AddEventFormData = z.infer<typeof eventSchema>;
 interface AddEventDialogProps {
@@ -40,11 +40,11 @@ interface AddEventDialogProps {
   onEventAdded: (event: EventType) => void;
 }
 export function AddEventDialog({ isOpen, setIsOpen, onEventAdded }: AddEventDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<AddEventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: '',
-      type: 'Wine Tasting' as const,
+      type: 'Wine Tasting',
       maxCapacity: 10,
       date: new Date(),
     }

@@ -1,6 +1,6 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Receipt, Trash2 } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,11 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { Sale } from "@shared/types"
 import { format } from "date-fns"
-interface GetSalesColumnsProps {
-  onViewReceipt: (sale: Sale) => void;
-  onDelete: (sale: Sale) => void;
-}
-export const getSalesColumns = ({ onViewReceipt, onDelete }: GetSalesColumnsProps): ColumnDef<Sale>[] => [
+export const columns: ColumnDef<Sale>[] = [
   {
     accessorKey: "id",
     header: "Sale ID",
@@ -59,31 +55,22 @@ export const getSalesColumns = ({ onViewReceipt, onDelete }: GetSalesColumnsProp
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const sale = row.original;
-      return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onViewReceipt(sale)}>
-                <Receipt className="mr-2 h-4 w-4" />
-                <span>View Receipt</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(sale)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete Sale</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    },
+    cell: () => (
+      <div className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem>View Sale Details</DropdownMenuItem>
+            <DropdownMenuItem>Print Receipt</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
   },
 ]

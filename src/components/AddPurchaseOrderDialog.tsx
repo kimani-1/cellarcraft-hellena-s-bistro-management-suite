@@ -29,9 +29,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 const poSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  expectedDeliveryDate: z.date(),
-  itemCount: z.coerce.number().int().min(1, "Item count must be at least 1"),
-  totalValue: z.coerce.number().min(0, "Total value must be a positive number"),
+  expectedDeliveryDate: z.date({ required_error: "A date is required." }),
+  itemCount: z.preprocess((val) => Number(String(val).trim() || 0), z.number().int().min(1, "Item count must be at least 1")),
+  totalValue: z.preprocess((val) => Number(String(val).trim() || 0), z.number().min(0, "Total value must be a positive number")),
 });
 type AddPOFormData = z.infer<typeof poSchema>;
 interface AddPurchaseOrderDialogProps {
@@ -41,7 +41,7 @@ interface AddPurchaseOrderDialogProps {
   onPurchaseOrderAdded: (order: PurchaseOrder) => void;
 }
 export function AddPurchaseOrderDialog({ isOpen, setIsOpen, suppliers, onPurchaseOrderAdded }: AddPurchaseOrderDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<AddPOFormData>({
     resolver: zodResolver(poSchema),
     defaultValues: {
       itemCount: 1,

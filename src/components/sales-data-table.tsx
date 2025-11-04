@@ -20,20 +20,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { getSalesColumns } from "./sales-table-columns"
+import { columns } from "./sales-table-columns"
+import { api } from "@/lib/api-client"
 import type { Sale } from "@shared/types"
 import { Skeleton } from "./ui/skeleton"
-interface SalesDataTableProps {
-  data: Sale[];
-  isLoading: boolean;
-  error: string | null;
-  onViewReceipt: (sale: Sale) => void;
-  onDelete: (sale: Sale) => void;
-}
-export function SalesDataTable({ data, isLoading, error, onViewReceipt, onDelete }: SalesDataTableProps) {
+export function SalesDataTable() {
+  const [data, setData] = React.useState<Sale[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: true }])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const columns = React.useMemo(() => getSalesColumns({ onViewReceipt, onDelete }), [onViewReceipt, onDelete]);
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const fetchedData = await api<{ items: Sale[] }>('/api/sales');
+        setData(fetchedData.items || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch sales data.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
   const table = useReactTable({
     data,
     columns,

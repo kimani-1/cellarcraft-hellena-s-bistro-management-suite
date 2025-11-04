@@ -51,7 +51,7 @@ export function Sidebar() {
             <div className="flex items-center gap-2">
               <Wine className="h-8 w-8 text-gold" />
               <h1 className="text-xl font-display font-bold text-foreground">
-                Hellena's Bistro
+                CellarCraft
               </h1>
             </div>
           )}

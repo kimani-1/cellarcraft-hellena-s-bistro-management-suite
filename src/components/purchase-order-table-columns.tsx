@@ -1,6 +1,6 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Truck, CheckCircle } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,10 +19,7 @@ const statusConfig = {
   'Delivered': 'bg-green-400/20 text-green-300 border-green-400/30',
   'Cancelled': 'bg-red-400/20 text-red-300 border-red-400/30',
 }
-interface GetPurchaseOrderColumnsProps {
-  onStatusChange: (order: PurchaseOrder, status: PurchaseOrder['status']) => void;
-}
-export const getPurchaseOrderColumns = ({ onStatusChange }: GetPurchaseOrderColumnsProps): ColumnDef<PurchaseOrder>[] => [
+export const columns: ColumnDef<PurchaseOrder>[] = [
   {
     accessorKey: "id",
     header: "Order ID",
@@ -54,7 +51,7 @@ export const getPurchaseOrderColumns = ({ onStatusChange }: GetPurchaseOrderColu
     header: () => <div className="text-right">Total Value</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("totalValue"))
-      const formatted = new Intl.NumberFormat("en-KE", {
+      const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "KES",
       }).format(amount)
@@ -63,31 +60,22 @@ export const getPurchaseOrderColumns = ({ onStatusChange }: GetPurchaseOrderColu
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const order = row.original;
-      return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onStatusChange(order, 'Shipped')} disabled={order.status === 'Shipped' || order.status === 'Delivered'}>
-                <Truck className="mr-2 h-4 w-4" />
-                <span>Mark as Shipped</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange(order, 'Delivered')} disabled={order.status === 'Delivered'}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                <span>Mark as Delivered</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <div className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem>View Order Details</DropdownMenuItem>
+            <DropdownMenuItem>Mark as Shipped</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
   },
 ]

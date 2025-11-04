@@ -1,6 +1,6 @@
 "use client"
 import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUpDown, MoreHorizontal, Pencil, Trash2, UserCheck, UserX } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,12 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { StaffMember } from "@shared/types"
 import { cn } from "@/lib/utils"
-interface GetStaffColumnsProps {
-  onEdit: (staff: StaffMember) => void;
-  onDeactivate: (staff: StaffMember) => void;
-  onDelete: (staff: StaffMember) => void;
-}
-export const getStaffColumns = ({ onEdit, onDeactivate, onDelete }: GetStaffColumnsProps): ColumnDef<StaffMember>[] => [
+export const columns: ColumnDef<StaffMember>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -60,37 +55,24 @@ export const getStaffColumns = ({ onEdit, onDeactivate, onDelete }: GetStaffColu
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const staff = row.original;
-      const isActive = staff.status === 'Active';
-      return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onEdit(staff)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                <span>Edit Details</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDeactivate(staff)}>
-                {isActive ? <UserX className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                <span>{isActive ? 'Deactivate' : 'Activate'}</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(staff)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    },
+    cell: ({ row }) => (
+      <div className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem>Edit Staff Member</DropdownMenuItem>
+            <DropdownMenuItem>Change Role</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-400">Deactivate</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
   },
 ]

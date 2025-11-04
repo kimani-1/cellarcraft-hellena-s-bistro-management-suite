@@ -1,33 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { PlusCircle, ServerCrash } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { PlusCircle, Users, ServerCrash } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { api } from '@/lib/api-client';
 import type { Event as EventType } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AddEventDialog } from '@/components/AddEventDialog';
-import { EditEventDialog } from '@/components/EditEventDialog';
-import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
-import { EventCard } from '@/components/EventCard';
-import { toast } from 'sonner';
+const eventTypeConfig = {
+  'Wine Tasting': 'bg-red-400/20 text-red-300 border-red-400/30',
+  'Launch Party': 'bg-blue-400/20 text-blue-300 border-blue-400/30',
+  'Private Event': 'bg-purple-400/20 text-purple-300 border-purple-400/30',
+  'Class': 'bg-green-400/20 text-green-300 border-green-400/30',
+};
 export function EventsPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [events, setEvents] = useState<EventType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
         setError(null);
         const fetchedData = await api<{ items: EventType[] }>('/api/events');
-        setEvents(fetchedData.items.sort((a, b) => a.date - b.date) || []);
+        setEvents(fetchedData.items || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch events.');
       } finally {
@@ -39,43 +40,15 @@ export function EventsPage() {
   const handleEventAdded = (newEvent: EventType) => {
     setEvents(prev => [...prev, newEvent].sort((a, b) => a.date - b.date));
   };
-  const handleEditEvent = (event: EventType) => {
-    setSelectedEvent(event);
-    setIsEditDialogOpen(true);
-  };
-  const handleEventUpdated = (updatedEvent: EventType) => {
-    setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e).sort((a, b) => a.date - b.date));
-  };
-  const handleDeleteEvent = (event: EventType) => {
-    setSelectedEvent(event);
-    setIsDeleteDialogOpen(true);
-  };
-  const confirmDeleteEvent = async () => {
-    if (!selectedEvent) return;
-    try {
-      await api(`/api/events/${selectedEvent.id}`, { method: 'DELETE' });
-      setEvents(prev => prev.filter(e => e.id !== selectedEvent.id));
-      toast.success("Event Deleted", { description: `${selectedEvent.title} has been removed.` });
-    } catch (err) {
-      toast.error("Failed to delete event", { description: err instanceof Error ? err.message : "An unknown error occurred." });
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedEvent(null);
-    }
-  };
   const eventsOnSelectedDate = events.filter(event =>
     date ? format(new Date(event.date), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd') : false
   );
   return (
     <div className="space-y-8">
-      <AddEventDialog isOpen={isAddDialogOpen} setIsOpen={setIsAddDialogOpen} onEventAdded={handleEventAdded} />
-      <EditEventDialog isOpen={isEditDialogOpen} setIsOpen={setIsEditDialogOpen} event={selectedEvent} onEventUpdated={handleEventUpdated} />
-      <DeleteConfirmationDialog
-        isOpen={isDeleteDialogOpen}
-        setIsOpen={setIsDeleteDialogOpen}
-        onConfirm={confirmDeleteEvent}
-        title="Delete Event?"
-        description={`Are you sure you want to delete the event "${selectedEvent?.title}"? This action cannot be undone.`}
+      <AddEventDialog
+        isOpen={isAddDialogOpen}
+        setIsOpen={setIsAddDialogOpen}
+        onEventAdded={handleEventAdded}
       />
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -125,7 +98,21 @@ export function EventsPage() {
           ) : eventsOnSelectedDate.length > 0 ? (
             <div className="space-y-4">
               {eventsOnSelectedDate.map(event => (
-                <EventCard key={event.id} event={event} onEdit={handleEditEvent} onDelete={handleDeleteEvent} />
+                <Card key={event.id} className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-bold">{event.title}</CardTitle>
+                    <Badge variant="outline" className={cn("font-semibold w-fit", eventTypeConfig[event.type])}>
+                      {event.type}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="flex justify-between items-center text-sm">
+                    <p className="text-muted-foreground">{format(new Date(event.date), 'p')}</p>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>{event.attendees} / {event.maxCapacity}</span>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ProductCard } from '@/components/product-card';
 import { Search, PlusCircle, ServerCrash } from 'lucide-react';
 import type { Product } from '@shared/types';

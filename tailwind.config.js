@@ -14,10 +14,8 @@ export default {
   				'sans-serif'
   			],
   			display: [
-  				'Cal Sans',
-  				'Inter',
-  				'system-ui',
-  				'sans-serif'
+  				'Playfair Display',
+  				'serif'
   			],
   			mono: [
   				'JetBrains Mono',
@@ -91,6 +89,9 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+            charcoal: '#1a1a1a',
+            burgundy: '#581c1c',
+            gold: '#d4af37',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			muted: {
@@ -144,8 +145,8 @@ export default {
   		},
   		boxShadow: {
   			soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-  			glow: '0 0 20px -5px rgba(99, 102, 241, 0.4)',
-  			'glow-lg': '0 0 40px -10px rgba(99, 102, 241, 0.3)',
+  			glow: '0 0 15px -3px hsl(var(--primary) / 0.5)',
+  			'glow-lg': '0 0 30px -10px hsl(var(--primary) / 0.4)',
   			primary: '0 0 20px -5px hsl(var(--primary) / 0.4)',
   			glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)'
   		},

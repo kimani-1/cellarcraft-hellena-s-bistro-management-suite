@@ -29,9 +29,9 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 const poSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
-  expectedDeliveryDate: z.date({ required_error: "A date is required." }),
-  itemCount: z.string().min(1, "Item count is required").transform(Number).pipe(z.number().int().min(1, "Item count must be at least 1")),
-  totalValue: z.string().min(1, "Total value is required").transform(Number).pipe(z.number().min(0, "Total value must be a positive number")),
+  expectedDeliveryDate: z.date(),
+  itemCount: z.coerce.number().int().min(1, "Item count must be at least 1"),
+  totalValue: z.coerce.number().min(0, "Total value must be a positive number"),
 });
 type AddPOFormData = z.infer<typeof poSchema>;
 interface AddPurchaseOrderDialogProps {
@@ -44,8 +44,8 @@ export function AddPurchaseOrderDialog({ isOpen, setIsOpen, suppliers, onPurchas
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<AddPOFormData>({
     resolver: zodResolver(poSchema),
     defaultValues: {
-      itemCount: '1',
-      totalValue: '0',
+      itemCount: 1,
+      totalValue: 0,
       expectedDeliveryDate: new Date(),
     }
   });
@@ -138,12 +138,12 @@ export function AddPurchaseOrderDialog({ isOpen, setIsOpen, suppliers, onPurchas
             </div>
             <div className="space-y-2">
               <Label htmlFor="itemCount">Number of Items</Label>
-              <Input id="itemCount" type="text" inputMode="numeric" {...register("itemCount")} />
+              <Input id="itemCount" type="number" {...register("itemCount")} />
               {errors.itemCount && <p className="text-red-500 text-xs">{errors.itemCount.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="totalValue">Total Value (KSH)</Label>
-              <Input id="totalValue" type="text" inputMode="decimal" {...register("totalValue")} />
+              <Input id="totalValue" type="number" step="0.01" {...register("totalValue")} />
               {errors.totalValue && <p className="text-red-500 text-xs">{errors.totalValue.message}</p>}
             </div>
           </div>

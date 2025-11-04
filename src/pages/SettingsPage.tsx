@@ -16,13 +16,24 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 const settingsSchema = z.object({
   storeName: z.string().min(1, "Store name is required"),
-  taxRate: z.preprocess(
-    (val) => parseFloat(String(val)),
-    z.number().min(0, "Tax rate must be positive")
-  ),
+  taxRate: z.coerce.number().min(0, "Tax rate must be positive"),
   currency: z.string().min(1, "Currency is required"),
 });
 type SettingsFormData = z.infer<typeof settingsSchema>;
+const profileSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters"),
+  email: z.string().email("Invalid email address"),
+});
+type ProfileFormData = z.infer<typeof profileSchema>;
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+type PasswordFormData = z.infer<typeof passwordSchema>;
 export function SettingsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
@@ -30,8 +41,23 @@ export function SettingsPage() {
   const [isLoadingStaff, setIsLoadingStaff] = useState(true);
   const [staffError, setStaffError] = useState<string | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<SettingsFormData>({
+  const settingsForm = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
+  });
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "Hellena Smith",
+      email: "owner@cellarcraft.com",
+    },
+  });
+  const passwordForm = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
   useEffect(() => {
     const fetchStaff = async () => {
@@ -50,7 +76,7 @@ export function SettingsPage() {
       try {
         setIsLoadingSettings(true);
         const settings = await api<StoreSettings>('/api/settings');
-        reset(settings);
+        settingsForm.reset(settings);
       } catch (err) {
         toast.error("Failed to load settings", { description: err instanceof Error ? err.message : "An unknown error occurred." });
       } finally {
@@ -59,7 +85,7 @@ export function SettingsPage() {
     };
     fetchStaff();
     fetchSettings();
-  }, [reset]);
+  }, [settingsForm.reset]);
   const handleStaffAdded = (newStaffMember: StaffMember) => {
     setStaff(prev => [newStaffMember, ...prev]);
   };
@@ -74,6 +100,19 @@ export function SettingsPage() {
     } catch (error) {
       toast.error("Failed to save settings", { id: toastId, description: error instanceof Error ? error.message : "An unknown error occurred." });
     }
+  };
+  const onProfileSubmit = async (data: ProfileFormData) => {
+    const toastId = toast.loading("Updating profile...");
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success("Profile Updated!", { id: toastId, description: `Your profile information has been saved.` });
+  };
+  const onPasswordSubmit = async (data: PasswordFormData) => {
+    const toastId = toast.loading("Changing password...");
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success("Password Changed!", { id: toastId, description: "Your password has been updated successfully." });
+    passwordForm.reset();
   };
   return (
     <div className="space-y-8">
@@ -100,16 +139,22 @@ export function SettingsPage() {
               <CardTitle>My Profile</CardTitle>
               <CardDescription>Update your personal information.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 max-w-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="profileName">Name</Label>
-                <Input id="profileName" defaultValue="Hellena Smith" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="profileEmail">Email</Label>
-                <Input id="profileEmail" type="email" defaultValue="owner@cellarcraft.com" />
-              </div>
-              <Button className="bg-gold text-charcoal hover:bg-gold/90">Update Profile</Button>
+            <CardContent>
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6 max-w-2xl">
+                <div className="space-y-2">
+                  <Label htmlFor="profileName">Name</Label>
+                  <Input id="profileName" {...profileForm.register("name")} />
+                  {profileForm.formState.errors.name && <p className="text-red-500 text-xs">{profileForm.formState.errors.name.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="profileEmail">Email</Label>
+                  <Input id="profileEmail" type="email" {...profileForm.register("email")} />
+                  {profileForm.formState.errors.email && <p className="text-red-500 text-xs">{profileForm.formState.errors.email.message}</p>}
+                </div>
+                <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={profileForm.formState.isSubmitting}>
+                  {profileForm.formState.isSubmitting ? "Updating..." : "Update Profile"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -119,20 +164,27 @@ export function SettingsPage() {
               <CardTitle>Change Password</CardTitle>
               <CardDescription>Update your account password.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 max-w-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" />
-              </div>
-              <Button className="bg-gold text-charcoal hover:bg-gold/90">Change Password</Button>
+            <CardContent>
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6 max-w-2xl">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Input id="currentPassword" type="password" {...passwordForm.register("currentPassword")} />
+                  {passwordForm.formState.errors.currentPassword && <p className="text-red-500 text-xs">{passwordForm.formState.errors.currentPassword.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input id="newPassword" type="password" {...passwordForm.register("newPassword")} />
+                  {passwordForm.formState.errors.newPassword && <p className="text-red-500 text-xs">{passwordForm.formState.errors.newPassword.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Input id="confirmPassword" type="password" {...passwordForm.register("confirmPassword")} />
+                  {passwordForm.formState.errors.confirmPassword && <p className="text-red-500 text-xs">{passwordForm.formState.errors.confirmPassword.message}</p>}
+                </div>
+                <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={passwordForm.formState.isSubmitting}>
+                  {passwordForm.formState.isSubmitting ? "Changing..." : "Change Password"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
@@ -167,24 +219,24 @@ export function SettingsPage() {
                   <Skeleton className="h-10 w-24" />
                 </div>
               ) : (
-                <form onSubmit={handleSubmit(onSettingsSubmit)} className="space-y-6 max-w-2xl">
+                <form onSubmit={settingsForm.handleSubmit(onSettingsSubmit)} className="space-y-6 max-w-2xl">
                   <div className="space-y-2">
                     <Label htmlFor="storeName">Store Name</Label>
-                    <Input id="storeName" {...register("storeName")} />
-                    {errors.storeName && <p className="text-red-500 text-xs">{errors.storeName.message}</p>}
+                    <Input id="storeName" {...settingsForm.register("storeName")} />
+                    {settingsForm.formState.errors.storeName && <p className="text-red-500 text-xs">{settingsForm.formState.errors.storeName.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                    <Input id="taxRate" type="number" step="0.1" {...register("taxRate")} />
-                    {errors.taxRate && <p className="text-red-500 text-xs">{errors.taxRate.message}</p>}
+                    <Input id="taxRate" type="number" step="0.1" {...settingsForm.register("taxRate")} />
+                    {settingsForm.formState.errors.taxRate && <p className="text-red-500 text-xs">{settingsForm.formState.errors.taxRate.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="currency">Currency Symbol</Label>
-                    <Input id="currency" {...register("currency")} />
-                    {errors.currency && <p className="text-red-500 text-xs">{errors.currency.message}</p>}
+                    <Input id="currency" {...settingsForm.register("currency")} />
+                    {settingsForm.formState.errors.currency && <p className="text-red-500 text-xs">{settingsForm.formState.errors.currency.message}</p>}
                   </div>
-                  <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={settingsForm.formState.isSubmitting}>
+                    {settingsForm.formState.isSubmitting ? "Saving..." : "Save Changes"}
                   </Button>
                 </form>
               )}

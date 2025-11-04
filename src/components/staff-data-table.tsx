@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { columns } from "./staff-table-columns"
+import { getStaffColumns } from "./staff-table-columns"
 import { PlusCircle } from "lucide-react"
 import type { StaffMember } from "@shared/types"
 import { Skeleton } from "./ui/skeleton"
@@ -29,10 +29,14 @@ interface StaffDataTableProps {
   isLoading: boolean;
   error: string | null;
   onAddStaff: () => void;
+  onEdit: (staff: StaffMember) => void;
+  onDeactivate: (staff: StaffMember) => void;
+  onDelete: (staff: StaffMember) => void;
 }
-export function StaffDataTable({ data, isLoading, error, onAddStaff }: StaffDataTableProps) {
+export function StaffDataTable({ data, isLoading, error, onAddStaff, onEdit, onDeactivate, onDelete }: StaffDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const columns = React.useMemo(() => getStaffColumns({ onEdit, onDeactivate, onDelete }), [onEdit, onDeactivate, onDelete]);
   const table = useReactTable({
     data,
     columns,

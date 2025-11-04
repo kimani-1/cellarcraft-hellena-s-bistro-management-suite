@@ -29,11 +29,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Customer } from "@shared/types"
-import { columns } from "./customer-table-columns"
+import { getCustomerColumns } from "./customer-table-columns"
 interface CustomerDataTableProps {
   data: Customer[];
+  onEdit: (customer: Customer) => void;
+  onDelete: (customer: Customer) => void;
 }
-export function CustomerDataTable({ data }: CustomerDataTableProps) {
+export function CustomerDataTable({ data, onEdit, onDelete }: CustomerDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -41,6 +43,7 @@ export function CustomerDataTable({ data }: CustomerDataTableProps) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const columns = React.useMemo(() => getCustomerColumns({ onEdit, onDelete }), [onEdit, onDelete]);
   const table = useReactTable({
     data,
     columns,

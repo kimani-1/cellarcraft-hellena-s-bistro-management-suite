@@ -8,7 +8,6 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- DANGER ZONE ---
   app.delete('/api/all-data', async (c) => {
     try {
-      // Clearing one index is enough to trigger a full wipe of the DO storage.
       const index = new Index(c.env, ProductEntity.indexName);
       await index.clear();
       return ok(c, { message: 'All application data has been cleared.' });
@@ -88,6 +87,20 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const customer = await CustomerEntity.create(c.env, newCustomer);
     return ok(c, customer);
   });
+  customers.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const body = await c.req.json<Partial<Customer>>();
+    const customer = new CustomerEntity(c.env, id);
+    if (!(await customer.exists())) return notFound(c, 'Customer not found');
+    await customer.patch(body);
+    return ok(c, await customer.getState());
+  });
+  customers.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await CustomerEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Customer not found');
+    return ok(c, { id });
+  });
   app.route('/api/customers', customers);
   // --- Sale Routes ---
   const sales = new Hono<{ Bindings: Env }>();
@@ -118,6 +131,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     }
     const sale = await SaleEntity.create(c.env, newSale);
     return ok(c, sale);
+  });
+  sales.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await SaleEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Sale not found');
+    return ok(c, { id });
   });
   app.route('/api/sales', sales);
   // --- Supplier Routes ---
@@ -208,6 +227,29 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const staffMember = await StaffMemberEntity.create(c.env, newStaffMember);
     return ok(c, staffMember);
+  });
+  staff.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const body = await c.req.json<Partial<StaffMember>>();
+    const staffMember = new StaffMemberEntity(c.env, id);
+    if (!(await staffMember.exists())) return notFound(c, 'Staff member not found');
+    await staffMember.patch(body);
+    return ok(c, await staffMember.getState());
+  });
+  staff.patch('/:id/status', async (c) => {
+    const { id } = c.req.param();
+    const { status } = await c.req.json<{ status: 'Active' | 'Inactive' }>();
+    if (status !== 'Active' && status !== 'Inactive') return bad(c, 'Invalid status');
+    const staffMember = new StaffMemberEntity(c.env, id);
+    if (!(await staffMember.exists())) return notFound(c, 'Staff member not found');
+    await staffMember.patch({ status });
+    return ok(c, await staffMember.getState());
+  });
+  staff.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await StaffMemberEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Staff member not found');
+    return ok(c, { id });
   });
   app.route('/api/staff', staff);
   // --- Settings Routes ---

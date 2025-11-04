@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { StaffDataTable } from "@/components/staff-data-table";
 import { DeleteDataDialog } from "@/components/DeleteDataDialog";
 import { AddStaffDialog } from "@/components/AddStaffDialog";
+import { EditStaffDialog } from "@/components/EditStaffDialog";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
 import { api } from "@/lib/api-client";
 import type { StaffMember, StoreSettings } from "@shared/types";
 import { toast } from "sonner";
@@ -37,6 +39,9 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 export function SettingsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
+  const [isEditStaffDialogOpen, setIsEditStaffDialogOpen] = useState(false);
+  const [isDeleteStaffDialogOpen, setIsDeleteStaffDialogOpen] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoadingStaff, setIsLoadingStaff] = useState(true);
   const [staffError, setStaffError] = useState<string | null>(null);
@@ -85,9 +90,46 @@ export function SettingsPage() {
     };
     fetchStaff();
     fetchSettings();
-  }, [settingsForm.reset]);
+  }, [settingsForm]);
   const handleStaffAdded = (newStaffMember: StaffMember) => {
     setStaff(prev => [newStaffMember, ...prev]);
+  };
+  const handleEditStaff = (staffMember: StaffMember) => {
+    setSelectedStaff(staffMember);
+    setIsEditStaffDialogOpen(true);
+  };
+  const handleStaffUpdated = (updatedStaff: StaffMember) => {
+    setStaff(prev => prev.map(s => s.id === updatedStaff.id ? updatedStaff : s));
+  };
+  const handleDeactivateStaff = async (staffMember: StaffMember) => {
+    const newStatus = staffMember.status === 'Active' ? 'Inactive' : 'Active';
+    try {
+      const updatedStaff = await api<StaffMember>(`/api/staff/${staffMember.id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+      handleStaffUpdated(updatedStaff);
+      toast.success(`Staff ${newStatus}`, { description: `${staffMember.name} has been set to ${newStatus.toLowerCase()}.` });
+    } catch (error) {
+      toast.error("Failed to update status", { description: error instanceof Error ? error.message : "An unknown error occurred." });
+    }
+  };
+  const handleDeleteStaff = (staffMember: StaffMember) => {
+    setSelectedStaff(staffMember);
+    setIsDeleteStaffDialogOpen(true);
+  };
+  const confirmDeleteStaff = async () => {
+    if (!selectedStaff) return;
+    try {
+      await api(`/api/staff/${selectedStaff.id}`, { method: 'DELETE' });
+      setStaff(prev => prev.filter(s => s.id !== selectedStaff.id));
+      toast.success("Staff Member Deleted", { description: `${selectedStaff.name} has been removed.` });
+    } catch (error) {
+      toast.error("Failed to delete staff member", { description: error instanceof Error ? error.message : "An unknown error occurred." });
+    } finally {
+      setIsDeleteStaffDialogOpen(false);
+      setSelectedStaff(null);
+    }
   };
   const onSettingsSubmit = async (data: SettingsFormData) => {
     const toastId = toast.loading("Saving settings...");
@@ -103,13 +145,11 @@ export function SettingsPage() {
   };
   const onProfileSubmit = async (data: ProfileFormData) => {
     const toastId = toast.loading("Updating profile...");
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast.success("Profile Updated!", { id: toastId, description: `Your profile information has been saved.` });
   };
   const onPasswordSubmit = async (data: PasswordFormData) => {
     const toastId = toast.loading("Changing password...");
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast.success("Password Changed!", { id: toastId, description: "Your password has been updated successfully." });
     passwordForm.reset();
@@ -117,10 +157,14 @@ export function SettingsPage() {
   return (
     <div className="space-y-8">
       <DeleteDataDialog isOpen={isDeleteDialogOpen} setIsOpen={setIsDeleteDialogOpen} />
-      <AddStaffDialog
-        isOpen={isAddStaffDialogOpen}
-        setIsOpen={setIsAddStaffDialogOpen}
-        onStaffAdded={handleStaffAdded}
+      <AddStaffDialog isOpen={isAddStaffDialogOpen} setIsOpen={setIsAddStaffDialogOpen} onStaffAdded={handleStaffAdded} />
+      <EditStaffDialog isOpen={isEditStaffDialogOpen} setIsOpen={setIsEditStaffDialogOpen} staffMember={selectedStaff} onStaffUpdated={handleStaffUpdated} />
+      <DeleteConfirmationDialog
+        isOpen={isDeleteStaffDialogOpen}
+        setIsOpen={setIsDeleteStaffDialogOpen}
+        onConfirm={confirmDeleteStaff}
+        title="Delete Staff Member?"
+        description={`Are you sure you want to delete ${selectedStaff?.name}? This action is irreversible.`}
       />
       <header>
         <h1 className="text-4xl font-display font-bold text-foreground">Settings</h1>
@@ -200,6 +244,9 @@ export function SettingsPage() {
                 isLoading={isLoadingStaff}
                 error={staffError}
                 onAddStaff={() => setIsAddStaffDialogOpen(true)}
+                onEdit={handleEditStaff}
+                onDeactivate={handleDeactivateStaff}
+                onDelete={handleDeleteStaff}
               />
             </CardContent>
           </Card>

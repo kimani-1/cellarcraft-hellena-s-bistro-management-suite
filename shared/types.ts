@@ -14,6 +14,7 @@ export type Product = {
   stockLevel: number;
   lowStockThreshold: number;
   imageUrl?: string;
+  createdAt: number;
 };
 export type Sale = {
   id: string;
@@ -55,6 +56,7 @@ export type PurchaseOrder = {
   status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
   totalValue: number;
   itemCount: number;
+  notes?: string;
 };
 export type OnlineOrder = {
   id: string;

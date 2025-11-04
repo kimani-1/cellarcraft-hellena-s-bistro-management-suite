@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ok, bad, notFound, isStr, Index } from './core-utils';
 import { ProductEntity, CustomerEntity, SaleEntity, SupplierEntity, PurchaseOrderEntity, OnlineOrderEntity, EventEntity, StaffMemberEntity, SettingsEntity } from './entities';
-import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder, StoreSettings, Supplier } from "@shared/types";
+import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder, StoreSettings, Supplier, OnlineOrder } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'Hellena\'s Bistro API' }}));
   // --- DANGER ZONE ---
@@ -38,7 +38,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       stockLevel: body.stockLevel,
       lowStockThreshold: body.lowStockThreshold || 10,
       imageUrl: body.imageUrl || '',
-      vintage: body.vintage
+      vintage: body.vintage,
+      createdAt: Date.now(),
     };
     const product = await ProductEntity.create(c.env, newProduct);
     return ok(c, product);
@@ -202,6 +203,17 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const order = await PurchaseOrderEntity.create(c.env, newOrder);
     return ok(c, order);
   });
+  purchaseOrders.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const { status } = await c.req.json<{ status: PurchaseOrder['status'] }>();
+    if (!status || !['Pending', 'Shipped', 'Delivered', 'Cancelled'].includes(status)) {
+      return bad(c, 'Invalid status provided');
+    }
+    const order = new PurchaseOrderEntity(c.env, id);
+    if (!(await order.exists())) return notFound(c, 'Purchase order not found');
+    await order.patch({ status });
+    return ok(c, await order.getState());
+  });
   app.route('/api/purchase-orders', purchaseOrders);
   // --- Online Order Routes ---
   const onlineOrders = new Hono<{ Bindings: Env }>();
@@ -209,6 +221,17 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await OnlineOrderEntity.ensureSeed(c.env);
     const { items, next } = await OnlineOrderEntity.list(c.env);
     return ok(c, { items, next });
+  });
+  onlineOrders.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const { status } = await c.req.json<{ status: OnlineOrder['status'] }>();
+    if (!status || !['Pending Fulfillment', 'Shipped', 'Delivered'].includes(status)) {
+      return bad(c, 'Invalid status provided');
+    }
+    const order = new OnlineOrderEntity(c.env, id);
+    if (!(await order.exists())) return notFound(c, 'Online order not found');
+    await order.patch({ status });
+    return ok(c, await order.getState());
   });
   app.route('/api/online-orders', onlineOrders);
   // --- Event Routes ---

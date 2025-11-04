@@ -14,7 +14,8 @@ export class ProductEntity extends IndexedEntity<Product> {
     cost: 0,
     stockLevel: 0,
     lowStockThreshold: 0,
-    imageUrl: ""
+    imageUrl: "",
+    createdAt: 0,
   };
   static seedData = MOCK_PRODUCTS;
 }
@@ -71,6 +72,7 @@ export class PurchaseOrderEntity extends IndexedEntity<PurchaseOrder> {
     status: 'Pending',
     totalValue: 0,
     itemCount: 0,
+    notes: '',
   };
   static seedData = MOCK_PURCHASE_ORDERS;
 }

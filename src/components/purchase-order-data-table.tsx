@@ -20,17 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { columns } from "./purchase-order-table-columns"
+import { getPurchaseOrderColumns } from "./purchase-order-table-columns"
 import type { PurchaseOrder } from "@shared/types"
 import { Skeleton } from "./ui/skeleton"
 interface PurchaseOrderDataTableProps {
   data: PurchaseOrder[];
   isLoading: boolean;
   error: string | null;
+  onStatusChange: (order: PurchaseOrder, status: PurchaseOrder['status']) => void;
 }
-export function PurchaseOrderDataTable({ data, isLoading, error }: PurchaseOrderDataTableProps) {
+export function PurchaseOrderDataTable({ data, isLoading, error, onStatusChange }: PurchaseOrderDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const columns = React.useMemo(() => getPurchaseOrderColumns({ onStatusChange }), [onStatusChange]);
   const table = useReactTable({
     data,
     columns,

@@ -65,6 +65,18 @@ export function SuppliersPage() {
       setSelectedSupplier(null);
     }
   };
+  const handlePoStatusChange = async (order: PurchaseOrder, status: PurchaseOrder['status']) => {
+    try {
+      const updatedOrder = await api<PurchaseOrder>(`/api/purchase-orders/${order.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+      setPurchaseOrders(prev => prev.map(po => po.id === updatedOrder.id ? updatedOrder : po));
+      toast.success("Order Status Updated", { description: `Order ${order.id} marked as ${status}.` });
+    } catch (err) {
+      toast.error("Failed to update status", { description: err instanceof Error ? err.message : "An unknown error occurred." });
+    }
+  };
   return (
     <div className="space-y-8">
       <AddPurchaseOrderDialog
@@ -111,7 +123,12 @@ export function SuppliersPage() {
           />
         </TabsContent>
         <TabsContent value="purchase-orders" className="mt-6">
-          <PurchaseOrderDataTable data={purchaseOrders} isLoading={isLoading} error={error} />
+          <PurchaseOrderDataTable
+            data={purchaseOrders}
+            isLoading={isLoading}
+            error={error}
+            onStatusChange={handlePoStatusChange}
+          />
         </TabsContent>
       </Tabs>
     </div>

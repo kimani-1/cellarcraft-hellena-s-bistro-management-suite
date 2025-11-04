@@ -6,7 +6,7 @@ import { api } from '@/lib/api-client';
 import type { Sale, Product, Kpi } from '@shared/types';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ServerCrash } from 'lucide-react';
+import { ServerCrash, Bot } from 'lucide-react';
 export function DashboardPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -98,8 +98,8 @@ export function DashboardPage() {
           kpis.map((kpi) => <KpiCard key={kpi.title} {...kpi} />)
         )}
       </div>
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 bg-card/50 backdrop-blur-sm border-border/50">
           <CardHeader>
             <CardTitle className="font-display text-2xl">Weekly Sales Performance</CardTitle>
           </CardHeader>
@@ -123,6 +123,25 @@ export function DashboardPage() {
                   </BarChart>
                 </ResponsiveContainer>
               )}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader className="flex flex-row items-center gap-2">
+            <Bot className="h-6 w-6 text-gold" />
+            <CardTitle className="font-display text-2xl">Smart Assistant</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-sm">AI-powered insights to help you grow.</p>
+            <div className="space-y-3 text-sm">
+              <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+                <p className="font-semibold text-foreground">Restock Alert</p>
+                <p className="text-muted-foreground">Consider reordering <span className="text-gold">Tusker Lager</span>. Sales are up 25% this week.</p>
+              </div>
+              <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+                <p className="font-semibold text-foreground">Upsell Opportunity</p>
+                <p className="text-muted-foreground">Customers buying <span className="text-gold">Gilbeys Gin</span> also frequently buy <span className="text-gold">Tonic Water</span>.</p>
+              </div>
             </div>
           </CardContent>
         </Card>

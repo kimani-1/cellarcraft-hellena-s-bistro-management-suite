@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { api } from '@/lib/api-client';
 import type { OnlineOrder } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ServerCrash, MoreHorizontal, Truck, CheckCircle } from 'lucide-react';
+import { ServerCrash, MoreHorizontal, Truck, CheckCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DeleteConfirmationDialog } from '@/components/DeleteConfirmationDialog';
 const salesData = [
   { name: 'In-Store', sales: 8750 },
   { name: 'Online', sales: 2340 },
@@ -25,6 +26,8 @@ export function EcommercePage() {
   const [orders, setOrders] = useState<OnlineOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OnlineOrder | null>(null);
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -50,6 +53,23 @@ export function EcommercePage() {
       toast.success("Order Status Updated", { description: `Order ${order.id} marked as ${status}.` });
     } catch (err) {
       toast.error("Failed to update status", { description: err instanceof Error ? err.message : "An unknown error occurred." });
+    }
+  };
+  const handleDelete = (order: OnlineOrder) => {
+    setSelectedOrder(order);
+    setIsDeleteDialogOpen(true);
+  };
+  const confirmDelete = async () => {
+    if (!selectedOrder) return;
+    try {
+      await api(`/api/online-orders/${selectedOrder.id}`, { method: 'DELETE' });
+      setOrders(prev => prev.filter(o => o.id !== selectedOrder.id));
+      toast.success("Order Deleted", { description: `Order ${selectedOrder.id} has been removed.` });
+    } catch (err) {
+      toast.error("Failed to delete order", { description: err instanceof Error ? err.message : "An unknown error occurred." });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedOrder(null);
     }
   };
   const renderTableBody = () => {
@@ -110,6 +130,11 @@ export function EcommercePage() {
                 <CheckCircle className="mr-2 h-4 w-4" />
                 <span>Mark as Delivered</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDelete(order)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Order</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>
@@ -118,6 +143,13 @@ export function EcommercePage() {
   };
   return (
     <div className="space-y-8">
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        setIsOpen={setIsDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title="Delete Online Order?"
+        description={`Are you sure you want to delete order ${selectedOrder?.id}? This action cannot be undone.`}
+      />
       <header>
         <h1 className="text-4xl font-display font-bold text-foreground">E-commerce</h1>
         <p className="text-lg text-muted-foreground">Monitor and manage your online store operations.</p>

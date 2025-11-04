@@ -233,6 +233,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await order.patch({ status });
     return ok(c, await order.getState());
   });
+  onlineOrders.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await OnlineOrderEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Online order not found');
+    return ok(c, { id });
+  });
   app.route('/api/online-orders', onlineOrders);
   // --- Event Routes ---
   const events = new Hono<{ Bindings: Env }>();

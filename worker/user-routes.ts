@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ok, bad, notFound, isStr, Index } from './core-utils';
 import { ProductEntity, CustomerEntity, SaleEntity, SupplierEntity, PurchaseOrderEntity, OnlineOrderEntity, EventEntity, StaffMemberEntity, SettingsEntity } from './entities';
-import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder, StoreSettings } from "@shared/types";
+import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder, StoreSettings, Supplier } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'Hellena\'s Bistro API' }}));
   // --- DANGER ZONE ---
@@ -146,6 +146,36 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const { items, next } = await SupplierEntity.list(c.env);
     return ok(c, { items, next });
   });
+  suppliers.post('/', async (c) => {
+    const body = await c.req.json<Partial<Supplier>>();
+    if (!isStr(body.name) || !isStr(body.contactPerson) || !isStr(body.phone) || !isStr(body.email) || !isStr(body.category)) {
+      return bad(c, 'Missing required supplier fields');
+    }
+    const newSupplier: Supplier = {
+      id: `sup_${crypto.randomUUID()}`,
+      name: body.name,
+      contactPerson: body.contactPerson,
+      phone: body.phone,
+      email: body.email,
+      category: body.category as Supplier['category'],
+    };
+    const supplier = await SupplierEntity.create(c.env, newSupplier);
+    return ok(c, supplier);
+  });
+  suppliers.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const body = await c.req.json<Partial<Supplier>>();
+    const supplier = new SupplierEntity(c.env, id);
+    if (!(await supplier.exists())) return notFound(c, 'Supplier not found');
+    await supplier.patch(body);
+    return ok(c, await supplier.getState());
+  });
+  suppliers.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await SupplierEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Supplier not found');
+    return ok(c, { id });
+  });
   app.route('/api/suppliers', suppliers);
   // --- Purchase Order Routes ---
   const purchaseOrders = new Hono<{ Bindings: Env }>();
@@ -203,6 +233,20 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     const event = await EventEntity.create(c.env, newEvent);
     return ok(c, event);
+  });
+  events.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const body = await c.req.json<Partial<EventType>>();
+    const event = new EventEntity(c.env, id);
+    if (!(await event.exists())) return notFound(c, 'Event not found');
+    await event.patch(body);
+    return ok(c, await event.getState());
+  });
+  events.delete('/:id', async (c) => {
+    const { id } = c.req.param();
+    const deleted = await EventEntity.delete(c.env, id);
+    if (!deleted) return notFound(c, 'Event not found');
+    return ok(c, { id });
   });
   app.route('/api/events', events);
   // --- Staff Member Routes ---

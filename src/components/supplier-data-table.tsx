@@ -20,17 +20,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { columns } from "./supplier-table-columns"
+import { getSupplierColumns } from "./supplier-table-columns"
 import type { Supplier } from "@shared/types"
 import { Skeleton } from "./ui/skeleton"
 interface SupplierDataTableProps {
   data: Supplier[];
   isLoading: boolean;
   error: string | null;
+  onEdit: (supplier: Supplier) => void;
+  onDelete: (supplier: Supplier) => void;
 }
-export function SupplierDataTable({ data, isLoading, error }: SupplierDataTableProps) {
+export function SupplierDataTable({ data, isLoading, error, onEdit, onDelete }: SupplierDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const columns = React.useMemo(() => getSupplierColumns({ onEdit, onDelete }), [onEdit, onDelete]);
   const table = useReactTable({
     data,
     columns,

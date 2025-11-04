@@ -42,7 +42,7 @@ interface EditEventDialogProps {
   onEventUpdated: (event: EventType) => void;
 }
 export function EditEventDialog({ isOpen, setIsOpen, event, onEventUpdated }: EditEventDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EditEventFormData>({
     resolver: zodResolver(eventSchema),
   });
   useEffect(() => {

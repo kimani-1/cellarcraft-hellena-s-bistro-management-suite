@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,8 @@ import { z } from "zod";
 import type { Product } from "@shared/types";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
+import { ImageSelectorDialog } from "./ImageSelectorDialog";
+import { ImageIcon } from "lucide-react";
 const productSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   type: z.enum(["Wine", "Spirit", "Liqueur", "Beer"]),
@@ -41,9 +43,11 @@ interface EditProductDialogProps {
   onProductUpdated: (product: Product) => void;
 }
 export function EditProductDialog({ isOpen, setIsOpen, product, onProductUpdated }: EditProductDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<EditProductFormData>({
+  const [isImageSelectorOpen, setIsImageSelectorOpen] = useState(false);
+  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(productSchema),
   });
+  const imageUrl = watch("imageUrl");
   useEffect(() => {
     if (product) {
       reset({
@@ -73,80 +77,98 @@ export function EditProductDialog({ isOpen, setIsOpen, product, onProductUpdated
     }
   };
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px] bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl">Edit Product</DialogTitle>
-          <DialogDescription>
-            Update the details for {product?.name}.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Name</Label>
-              <Input id="name" {...register("name")} className="col-span-3" />
-              {errors.name && <p className="col-span-4 text-red-500 text-xs text-right">{errors.name.message}</p>}
+    <>
+      <ImageSelectorDialog
+        isOpen={isImageSelectorOpen}
+        setIsOpen={setIsImageSelectorOpen}
+        onImageSelect={(url) => setValue("imageUrl", url, { shouldValidate: true })}
+      />
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Edit Product</DialogTitle>
+            <DialogDescription>
+              Update the details for {product?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Name</Label>
+                <Input id="name" {...register("name")} className="col-span-3" />
+                {errors.name && <p className="col-span-4 text-red-500 text-xs text-right">{errors.name.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">Type</Label>
+                <Controller
+                  name="type"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Wine">Wine</SelectItem>
+                        <SelectItem value="Spirit">Spirit</SelectItem>
+                        <SelectItem value="Liqueur">Liqueur</SelectItem>
+                        <SelectItem value="Beer">Beer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.type && <p className="col-span-4 text-red-500 text-xs text-right">{errors.type.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="origin" className="text-right">Origin</Label>
+                <Input id="origin" {...register("origin")} className="col-span-3" />
+                {errors.origin && <p className="col-span-4 text-red-500 text-xs text-right">{errors.origin.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="price" className="text-right">Price (KSH)</Label>
+                <Input id="price" type="number" step="0.01" {...register("price")} className="col-span-3" />
+                {errors.price && <p className="col-span-4 text-red-500 text-xs text-right">{errors.price.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="cost" className="text-right">Cost (KSH)</Label>
+                <Input id="cost" type="number" step="0.01" {...register("cost")} className="col-span-3" />
+                {errors.cost && <p className="col-span-4 text-red-500 text-xs text-right">{errors.cost.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="stockLevel" className="text-right">Stock Level</Label>
+                <Input id="stockLevel" type="number" {...register("stockLevel")} className="col-span-3" />
+                {errors.stockLevel && <p className="col-span-4 text-red-500 text-xs text-right">{errors.stockLevel.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="lowStockThreshold" className="text-right">Low Stock Threshold</Label>
+                <Input id="lowStockThreshold" type="number" {...register("lowStockThreshold")} className="col-span-3" />
+                {errors.lowStockThreshold && <p className="col-span-4 text-red-500 text-xs text-right">{errors.lowStockThreshold.message}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right pt-2">Image</Label>
+                <div className="col-span-3 flex items-center gap-4">
+                  <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted/50">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Product preview" className="w-full h-full object-cover rounded-md" />
+                    ) : (
+                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                    )}
+                  </div>
+                  <Button type="button" variant="outline" onClick={() => setIsImageSelectorOpen(true)}>
+                    Select Image
+                  </Button>
+                </div>
+                {errors.imageUrl && <p className="col-span-4 text-red-500 text-xs text-right">{errors.imageUrl.message}</p>}
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">Type</Label>
-              <Controller
-                name="type"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Wine">Wine</SelectItem>
-                      <SelectItem value="Spirit">Spirit</SelectItem>
-                      <SelectItem value="Liqueur">Liqueur</SelectItem>
-                      <SelectItem value="Beer">Beer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.type && <p className="col-span-4 text-red-500 text-xs text-right">{errors.type.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origin" className="text-right">Origin</Label>
-              <Input id="origin" {...register("origin")} className="col-span-3" />
-              {errors.origin && <p className="col-span-4 text-red-500 text-xs text-right">{errors.origin.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">Price (KSH)</Label>
-              <Input id="price" type="number" step="0.01" {...register("price")} className="col-span-3" />
-              {errors.price && <p className="col-span-4 text-red-500 text-xs text-right">{errors.price.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="cost" className="text-right">Cost (KSH)</Label>
-              <Input id="cost" type="number" step="0.01" {...register("cost")} className="col-span-3" />
-              {errors.cost && <p className="col-span-4 text-red-500 text-xs text-right">{errors.cost.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="stockLevel" className="text-right">Stock Level</Label>
-              <Input id="stockLevel" type="number" {...register("stockLevel")} className="col-span-3" />
-              {errors.stockLevel && <p className="col-span-4 text-red-500 text-xs text-right">{errors.stockLevel.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="lowStockThreshold" className="text-right">Low Stock Threshold</Label>
-              <Input id="lowStockThreshold" type="number" {...register("lowStockThreshold")} className="col-span-3" />
-              {errors.lowStockThreshold && <p className="col-span-4 text-red-500 text-xs text-right">{errors.lowStockThreshold.message}</p>}
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="imageUrl" className="text-right">Image URL</Label>
-              <Input id="imageUrl" {...register("imageUrl")} className="col-span-3" placeholder="https://example.com/image.jpg" />
-              {errors.imageUrl && <p className="col-span-4 text-red-500 text-xs text-right">{errors.imageUrl.message}</p>}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <DialogFooter>
+              <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

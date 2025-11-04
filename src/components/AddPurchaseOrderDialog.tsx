@@ -41,7 +41,7 @@ interface AddPurchaseOrderDialogProps {
   onPurchaseOrderAdded: (order: PurchaseOrder) => void;
 }
 export function AddPurchaseOrderDialog({ isOpen, setIsOpen, suppliers, onPurchaseOrderAdded }: AddPurchaseOrderDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<AddPOFormData>({
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(poSchema),
     defaultValues: {
       itemCount: 1,

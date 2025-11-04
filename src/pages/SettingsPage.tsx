@@ -46,7 +46,7 @@ export function SettingsPage() {
   const [isLoadingStaff, setIsLoadingStaff] = useState(true);
   const [staffError, setStaffError] = useState<string | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const settingsForm = useForm<SettingsFormData>({
+  const settingsForm = useForm({
     resolver: zodResolver(settingsSchema),
   });
   const profileForm = useForm<ProfileFormData>({

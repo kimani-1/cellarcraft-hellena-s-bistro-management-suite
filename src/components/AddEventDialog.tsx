@@ -40,11 +40,11 @@ interface AddEventDialogProps {
   onEventAdded: (event: EventType) => void;
 }
 export function AddEventDialog({ isOpen, setIsOpen, onEventAdded }: AddEventDialogProps) {
-  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<AddEventFormData>({
+  const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: '',
-      type: 'Wine Tasting',
+      type: 'Wine Tasting' as const,
       maxCapacity: 10,
       date: new Date(),
     }

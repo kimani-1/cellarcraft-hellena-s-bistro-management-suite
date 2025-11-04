@@ -2,14 +2,15 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Product } from '@shared/types';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 interface ProductCardProps {
   product: Product;
   onDelete: (productId: string) => void;
+  onEdit: (product: Product) => void;
 }
-export function ProductCard({ product, onDelete }: ProductCardProps) {
+export function ProductCard({ product, onDelete, onEdit }: ProductCardProps) {
   const isLowStock = product.stockLevel <= product.lowStockThreshold;
   return (
     <Card className="flex flex-col overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 hover:border-gold/50 transition-all duration-300 hover:shadow-glow hover:-translate-y-1 group">
@@ -22,6 +23,10 @@ export function ProductCard({ product, onDelete }: ProductCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(product)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                <span>Edit</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDelete(product.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Delete</span>
@@ -43,8 +48,13 @@ export function ProductCard({ product, onDelete }: ProductCardProps) {
         <p className="text-sm text-muted-foreground">{product.origin}</p>
       </CardContent>
       <CardFooter className="p-4 flex justify-between items-center bg-muted/20">
-        <div className="text-2xl font-bold text-gold">
-          KSH {product.price.toFixed(2)}
+        <div>
+          <div className="text-2xl font-bold text-gold">
+            KSH {product.price.toFixed(2)}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Cost: KSH {(product.cost || 0).toFixed(2)}
+          </div>
         </div>
         <div
           className={cn(

@@ -5,6 +5,7 @@ import { ProductCard } from '@/components/product-card';
 import { Search, PlusCircle, ServerCrash } from 'lucide-react';
 import type { Product } from '@shared/types';
 import { AddProductDialog } from '@/components/AddProductDialog';
+import { EditProductDialog } from '@/components/EditProductDialog';
 import { api } from '@/lib/api-client';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
 import { toast } from 'sonner';
@@ -14,6 +15,8 @@ export function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -37,6 +40,13 @@ export function InventoryPage() {
   );
   const handleProductAdded = (newProduct: Product) => {
     setProducts(prev => [newProduct, ...prev]);
+  };
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setIsEditDialogOpen(true);
+  };
+  const handleProductUpdated = (updatedProduct: Product) => {
+    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
   };
   const handleDeleteProduct = async (productId: string) => {
     try {
@@ -79,7 +89,7 @@ export function InventoryPage() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {filteredProducts.map(product => (
-          <ProductCard key={product.id} product={product} onDelete={handleDeleteProduct} />
+          <ProductCard key={product.id} product={product} onDelete={handleDeleteProduct} onEdit={handleEditProduct} />
         ))}
       </div>
     );
@@ -90,6 +100,12 @@ export function InventoryPage() {
         isOpen={isAddDialogOpen}
         setIsOpen={setIsAddDialogOpen}
         onProductAdded={handleProductAdded}
+      />
+      <EditProductDialog
+        isOpen={isEditDialogOpen}
+        setIsOpen={setIsEditDialogOpen}
+        product={editingProduct}
+        onProductUpdated={handleProductUpdated}
       />
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

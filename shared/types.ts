@@ -80,3 +80,8 @@ export type StaffMember = {
   phone: string;
   status: 'Active' | 'Inactive';
 };
+export type StoreSettings = {
+  storeName: string;
+  taxRate: number;
+  currency: string;
+};

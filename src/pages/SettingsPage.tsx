@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,30 +11,69 @@ import { StaffDataTable } from "@/components/staff-data-table";
 import { DeleteDataDialog } from "@/components/DeleteDataDialog";
 import { AddStaffDialog } from "@/components/AddStaffDialog";
 import { api } from "@/lib/api-client";
-import type { StaffMember } from "@shared/types";
+import type { StaffMember, StoreSettings } from "@shared/types";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+const settingsSchema = z.object({
+  storeName: z.string().min(1, "Store name is required"),
+  taxRate: z.preprocess(
+    (val) => parseFloat(String(val)),
+    z.number().min(0, "Tax rate must be positive")
+  ),
+  currency: z.string().min(1, "Currency is required"),
+});
+type SettingsFormData = z.infer<typeof settingsSchema>;
 export function SettingsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStaffDialogOpen, setIsAddStaffDialogOpen] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(true);
+  const [staffError, setStaffError] = useState<string | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+  });
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStaff = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoadingStaff(true);
+        setStaffError(null);
         const fetchedData = await api<{ items: StaffMember[] }>('/api/staff');
         setStaff(fetchedData.items || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch staff data.');
+        setStaffError(err instanceof Error ? err.message : 'Failed to fetch staff data.');
       } finally {
-        setIsLoading(false);
+        setIsLoadingStaff(false);
       }
     };
-    fetchData();
-  }, []);
+    const fetchSettings = async () => {
+      try {
+        setIsLoadingSettings(true);
+        const settings = await api<StoreSettings>('/api/settings');
+        reset(settings);
+      } catch (err) {
+        toast.error("Failed to load settings", { description: err instanceof Error ? err.message : "An unknown error occurred." });
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+    fetchStaff();
+    fetchSettings();
+  }, [reset]);
   const handleStaffAdded = (newStaffMember: StaffMember) => {
     setStaff(prev => [newStaffMember, ...prev]);
+  };
+  const onSettingsSubmit = async (data: SettingsFormData) => {
+    const toastId = toast.loading("Saving settings...");
+    try {
+      await api<StoreSettings>('/api/settings', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      toast.success("Settings Saved!", { id: toastId });
+    } catch (error) {
+      toast.error("Failed to save settings", { id: toastId, description: error instanceof Error ? error.message : "An unknown error occurred." });
+    }
   };
   return (
     <div className="space-y-8">
@@ -103,8 +145,8 @@ export function SettingsPage() {
             <CardContent>
               <StaffDataTable
                 data={staff}
-                isLoading={isLoading}
-                error={error}
+                isLoading={isLoadingStaff}
+                error={staffError}
                 onAddStaff={() => setIsAddStaffDialogOpen(true)}
               />
             </CardContent>
@@ -116,20 +158,36 @@ export function SettingsPage() {
               <CardTitle>System Preferences</CardTitle>
               <CardDescription>Configure store-wide settings.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 max-w-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="storeName">Store Name</Label>
-                <Input id="storeName" defaultValue="Hellena's Bistro" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                <Input id="taxRate" type="number" defaultValue="16" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency Symbol</Label>
-                <Input id="currency" defaultValue="KSH" />
-              </div>
-              <Button className="bg-gold text-charcoal hover:bg-gold/90">Save Changes</Button>
+            <CardContent>
+              {isLoadingSettings ? (
+                <div className="space-y-6 max-w-2xl">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-24" />
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit(onSettingsSubmit)} className="space-y-6 max-w-2xl">
+                  <div className="space-y-2">
+                    <Label htmlFor="storeName">Store Name</Label>
+                    <Input id="storeName" {...register("storeName")} />
+                    {errors.storeName && <p className="text-red-500 text-xs">{errors.storeName.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                    <Input id="taxRate" type="number" step="0.1" {...register("taxRate")} />
+                    {errors.taxRate && <p className="text-red-500 text-xs">{errors.taxRate.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency Symbol</Label>
+                    <Input id="currency" {...register("currency")} />
+                    {errors.currency && <p className="text-red-500 text-xs">{errors.currency.message}</p>}
+                  </div>
+                  <Button type="submit" className="bg-gold text-charcoal hover:bg-gold/90" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
           <Card className="border-destructive bg-destructive/10">

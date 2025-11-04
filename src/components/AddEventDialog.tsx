@@ -31,7 +31,7 @@ const eventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   type: z.enum(["Wine Tasting", "Launch Party", "Private Event", "Class"]),
   date: z.date({ required_error: "A date is required." }),
-  maxCapacity: z.preprocess((val) => Number(String(val).trim() || 0), z.number().int().min(1, "Capacity must be at least 1")),
+  maxCapacity: z.string().min(1, "Capacity is required").transform(Number).pipe(z.number().int().min(1, "Capacity must be at least 1")),
 });
 type AddEventFormData = z.infer<typeof eventSchema>;
 interface AddEventDialogProps {
@@ -45,7 +45,7 @@ export function AddEventDialog({ isOpen, setIsOpen, onEventAdded }: AddEventDial
     defaultValues: {
       title: '',
       type: 'Wine Tasting',
-      maxCapacity: 10,
+      maxCapacity: '10',
       date: new Date(),
     }
   });
@@ -139,7 +139,7 @@ export function AddEventDialog({ isOpen, setIsOpen, onEventAdded }: AddEventDial
             </div>
             <div className="space-y-2">
               <Label htmlFor="maxCapacity">Max Capacity</Label>
-              <Input id="maxCapacity" type="number" {...register("maxCapacity")} />
+              <Input id="maxCapacity" type="text" inputMode="numeric" {...register("maxCapacity")} />
               {errors.maxCapacity && <p className="text-red-500 text-xs">{errors.maxCapacity.message}</p>}
             </div>
           </div>

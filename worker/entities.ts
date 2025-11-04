@@ -1,5 +1,5 @@
-import { IndexedEntity } from "./core-utils";
-import type { Product, Customer, Sale, Supplier, PurchaseOrder, OnlineOrder, Event, StaffMember } from "@shared/types";
+import { IndexedEntity, Entity } from "./core-utils";
+import type { Product, Customer, Sale, Supplier, PurchaseOrder, OnlineOrder, Event, StaffMember, StoreSettings } from "@shared/types";
 import { MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_SALES, MOCK_SUPPLIERS, MOCK_PURCHASE_ORDERS, MOCK_ONLINE_ORDERS, MOCK_EVENTS, MOCK_STAFF_MEMBERS } from "@shared/mock-data";
 // PRODUCT ENTITY
 export class ProductEntity extends IndexedEntity<Product> {
@@ -115,4 +115,13 @@ export class StaffMemberEntity extends IndexedEntity<StaffMember> {
     status: 'Active',
   };
   static seedData = MOCK_STAFF_MEMBERS;
+}
+// SETTINGS ENTITY (SINGLETON)
+export class SettingsEntity extends Entity<StoreSettings> {
+  static readonly entityName = "settings";
+  static readonly initialState: StoreSettings = {
+    storeName: "Hellena's Bistro",
+    taxRate: 16,
+    currency: "KSH",
+  };
 }

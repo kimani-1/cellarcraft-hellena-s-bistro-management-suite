@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { ok, bad, notFound, isStr, Index } from './core-utils';
-import { ProductEntity, CustomerEntity, SaleEntity, SupplierEntity, PurchaseOrderEntity, OnlineOrderEntity, EventEntity, StaffMemberEntity } from './entities';
-import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder } from "@shared/types";
+import { ProductEntity, CustomerEntity, SaleEntity, SupplierEntity, PurchaseOrderEntity, OnlineOrderEntity, EventEntity, StaffMemberEntity, SettingsEntity } from './entities';
+import type { Product, Customer, Sale, StaffMember, Event as EventType, PurchaseOrder, StoreSettings } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
-  app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CellarCraft API' }}));
+  app.get('/api/test', (c) => c.json({ success: true, data: { name: 'Hellena\'s Bistro API' }}));
   // --- DANGER ZONE ---
   app.delete('/api/all-data', async (c) => {
     try {
@@ -48,6 +48,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const { id } = c.req.param();
     const product = new ProductEntity(c.env, id);
     if (!(await product.exists())) return notFound(c, 'Product not found');
+    return ok(c, await product.getState());
+  });
+  products.put('/:id', async (c) => {
+    const { id } = c.req.param();
+    const body = await c.req.json<Partial<Product>>();
+    const product = new ProductEntity(c.env, id);
+    if (!(await product.exists())) return notFound(c, 'Product not found');
+    await product.patch(body);
     return ok(c, await product.getState());
   });
   products.delete('/:id', async (c) => {
@@ -202,4 +210,19 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     return ok(c, staffMember);
   });
   app.route('/api/staff', staff);
+  // --- Settings Routes ---
+  const settings = new Hono<{ Bindings: Env }>();
+  settings.get('/', async (c) => {
+    const settingsEntity = new SettingsEntity(c.env, 'store-settings');
+    const currentSettings = await settingsEntity.getState();
+    return ok(c, currentSettings);
+  });
+  settings.put('/', async (c) => {
+    const body = await c.req.json<Partial<StoreSettings>>();
+    const settingsEntity = new SettingsEntity(c.env, 'store-settings');
+    await settingsEntity.patch(body);
+    const updatedSettings = await settingsEntity.getState();
+    return ok(c, updatedSettings);
+  });
+  app.route('/api/settings', settings);
 }

@@ -7,7 +7,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex-1 flex flex-col h-screen">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-[url('https://www.transparenttextures.com/patterns/dark-wood.png')]">
           {children}
         </main>
       </div>
